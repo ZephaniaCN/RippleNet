@@ -14,6 +14,10 @@ def train(args, data_info, show_loss):
     model = RippleNet(args, n_entity, n_relation)
 
     with tf.Session() as sess:
+
+        test_writer = tf.summary.FileWriter('./logs/test',sess.graph)
+        train_writer = tf.summary.FileWriter('./logs/train', sess.graph)
+        eval_writer = tf.summary.FileWriter('./logs/eval', sess.graph)
         sess.run(tf.global_variables_initializer())
         for step in range(args.n_epoch):
             # training
@@ -22,15 +26,30 @@ def train(args, data_info, show_loss):
             while start < train_data.shape[0]:
                 _, loss = model.train(
                     sess, get_feed_dict(args, model, train_data, ripple_set, start, start + args.batch_size))
+                if start==0:
+                    loss_summary = tf.Summary()
+                    loss_summary.value.add(tag='loss', simple_value=loss)
+                    print(step + start / train_data.shape[0])
+                    train_writer.add_summary(loss_summary, step)
                 start += args.batch_size
-                if show_loss:
-                    print('%.1f%% %.4f' % (start / train_data.shape[0] * 100, loss))
+
 
             # evaluation
             train_auc, train_acc = evaluation(sess, args, model, train_data, ripple_set, args.batch_size)
+            train_summary = tf.Summary()
+            train_summary.value.add(tag='auc', simple_value=train_auc)
+            train_summary.value.add(tag='acc', simple_value=train_acc)
+            train_writer.add_summary(train_summary, step)
             eval_auc, eval_acc = evaluation(sess, args, model, eval_data, ripple_set, args.batch_size)
+            eval_summary = tf.Summary()
+            eval_summary.value.add(tag='auc', simple_value=eval_auc)
+            eval_summary.value.add(tag='acc', simple_value=eval_acc)
+            eval_writer.add_summary(eval_summary, step)
             test_auc, test_acc = evaluation(sess, args, model, test_data, ripple_set, args.batch_size)
-
+            test_summary = tf.Summary()
+            test_summary.value.add(tag='auc', simple_value=test_auc)
+            test_summary.value.add(tag='acc', simple_value=test_acc)
+            test_writer.add_summary(test_summary, step)
             print('epoch %d    train auc: %.4f  acc: %.4f    eval auc: %.4f  acc: %.4f    test auc: %.4f  acc: %.4f'
                   % (step, train_auc, train_acc, eval_auc, eval_acc, test_auc, test_acc))
 

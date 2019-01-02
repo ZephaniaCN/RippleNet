@@ -40,6 +40,6 @@ parser.add_argument('--using_all_hops', type=bool, default=True,
 
 args = parser.parse_args()
 
-show_loss = False
+show_loss = True
 data_info = load_data(args)
 train(args, data_info, show_loss)
