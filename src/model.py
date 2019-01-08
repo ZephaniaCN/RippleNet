@@ -97,6 +97,8 @@ class RippleNet(object):
             # [batch_size, dim]
             o = tf.reduce_sum(self.t_emb_list[hop] * probs_expanded, axis=1)
 
+            tf.summary.scalar('o_{}'.format(hop), tf.norm(o))
+
             self.item_embeddings = self.update_item_embedding(self.item_embeddings, o)
             o_list.append(o)
         return o_list
@@ -156,8 +158,8 @@ class RippleNet(object):
         self.optimizer = optimizer.apply_gradients(zip(gradients, variables))
         '''
 
-    def train(self, sess, feed_dict):
-        return sess.run([self.optimizer, self.loss], feed_dict)
+    def train(self, sess, summary, feed_dict):
+        return sess.run([self.optimizer, self.loss, summary], feed_dict)
 
     def eval(self, sess, feed_dict):
         labels, scores = sess.run([self.labels, self.scores_normalized], feed_dict)

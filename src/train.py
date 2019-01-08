@@ -3,6 +3,7 @@ import numpy as np
 from model import RippleNet
 
 
+
 def train(args, data_info, show_loss):
     train_data = data_info[0]
     eval_data = data_info[1]
@@ -11,26 +12,29 @@ def train(args, data_info, show_loss):
     n_relation = data_info[4]
     ripple_set = data_info[5]
 
-    model = RippleNet(args, n_entity, n_relation)
+    PFILE = '{}_hops'.format(args.n_hop)
 
+    model = RippleNet(args, n_entity, n_relation)
+    parameters_summary =tf.summary.merge_all()
     with tf.Session() as sess:
 
-        test_writer = tf.summary.FileWriter('./logs/test',sess.graph)
-        train_writer = tf.summary.FileWriter('./logs/train', sess.graph)
-        eval_writer = tf.summary.FileWriter('./logs/eval', sess.graph)
+        test_writer = tf.summary.FileWriter('./logs/{}/test'.format(PFILE),sess.graph)
+        train_writer = tf.summary.FileWriter('./logs/{}/train'.format(PFILE), sess.graph)
+        eval_writer = tf.summary.FileWriter('./logs/{}/eval'.format(PFILE), sess.graph)
+        model_writer = tf.summary.FileWriter('./logs/{}/parameters'.format(PFILE), sess.graph)
         sess.run(tf.global_variables_initializer())
         for step in range(args.n_epoch):
-            # training
+                # training
             np.random.shuffle(train_data)
             start = 0
             while start < train_data.shape[0]:
-                _, loss = model.train(
-                    sess, get_feed_dict(args, model, train_data, ripple_set, start, start + args.batch_size))
-                if start==0:
-                    loss_summary = tf.Summary()
-                    loss_summary.value.add(tag='loss', simple_value=loss)
-                    print(step + start / train_data.shape[0])
-                    train_writer.add_summary(loss_summary, step)
+                _, loss,o_vals = model.train(
+                    sess,parameters_summary, get_feed_dict(args, model, train_data, ripple_set, start, start + args.batch_size))
+                print((step + start / train_data.shape[0])*1000)
+                model_writer.add_summary(o_vals, (step+start / train_data.shape[0])*1000)
+                loss_summary = tf.Summary()
+                loss_summary.value.add(tag='loss', simple_value=loss)
+                train_writer.add_summary(loss_summary,(step+start / train_data.shape[0])*1000)
                 start += args.batch_size
 
 
