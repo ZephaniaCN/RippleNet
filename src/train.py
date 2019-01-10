@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
-from model import RippleNet
+from src.model import RippleNet
+from src.ripple_net_plus.model import RippleNetPlus
 
 
 
@@ -14,24 +15,24 @@ def train(args, data_info, show_loss):
 
     PFILE = '{}_hops'.format(args.n_hop)
 
-    model = RippleNet(args, n_entity, n_relation)
-    parameters_summary =tf.summary.merge_all()
+    model = RippleNetPlus(args, n_entity, n_relation) if args.model=='ripple_net_plus' else RippleNet(args,n_entity,n_relation)
+    #parameters_summary =tf.summary.merge_all()
     with tf.Session() as sess:
 
-        test_writer = tf.summary.FileWriter('./logs/{}/test'.format(PFILE),sess.graph)
-        train_writer = tf.summary.FileWriter('./logs/{}/train'.format(PFILE), sess.graph)
-        eval_writer = tf.summary.FileWriter('./logs/{}/eval'.format(PFILE), sess.graph)
-        model_writer = tf.summary.FileWriter('./logs/{}/parameters'.format(PFILE), sess.graph)
+        test_writer = tf.summary.FileWriter('./logs/{}/{}_test'.format(PFILE,args.model),sess.graph)
+        train_writer = tf.summary.FileWriter('./logs/{}/{}_train'.format(PFILE,args.model), sess.graph)
+        eval_writer = tf.summary.FileWriter('./logs/{}/{}_eval'.format(PFILE,args.model), sess.graph)
+        model_writer = tf.summary.FileWriter('./logs/{}/{}_parameters'.format(PFILE,args.model), sess.graph)
         sess.run(tf.global_variables_initializer())
         for step in range(args.n_epoch):
                 # training
             np.random.shuffle(train_data)
             start = 0
             while start < train_data.shape[0]:
-                _, loss,o_vals = model.train(
-                    sess,parameters_summary, get_feed_dict(args, model, train_data, ripple_set, start, start + args.batch_size))
+                _, loss = model.train(
+                    sess, get_feed_dict(args, model, train_data, ripple_set, start, start + args.batch_size))
                 print((step + start / train_data.shape[0])*1000)
-                model_writer.add_summary(o_vals, (step+start / train_data.shape[0])*1000)
+                #model_writer.add_summary(o_vals, (step+start / train_data.shape[0])*1000)
                 loss_summary = tf.Summary()
                 loss_summary.value.add(tag='loss', simple_value=loss)
                 train_writer.add_summary(loss_summary,(step+start / train_data.shape[0])*1000)

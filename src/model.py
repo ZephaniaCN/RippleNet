@@ -25,27 +25,29 @@ class RippleNet(object):
         self.using_all_hops = args.using_all_hops
 
     def _build_inputs(self):
-        self.items = tf.placeholder(dtype=tf.int32, shape=[None], name="items")
-        self.labels = tf.placeholder(dtype=tf.float64, shape=[None], name="labels")
-        self.memories_h = []
-        self.memories_r = []
-        self.memories_t = []
+        with tf.variable_scope('input'):
+            self.items = tf.placeholder(dtype=tf.int32, shape=[None], name="items")
+            self.labels = tf.placeholder(dtype=tf.float64, shape=[None], name="labels")
+            self.memories_h = []
+            self.memories_r = []
+            self.memories_t = []
 
-        for hop in range(self.n_hop):
-            self.memories_h.append(
-                tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_h_" + str(hop)))
-            self.memories_r.append(
-                tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_r_" + str(hop)))
-            self.memories_t.append(
-                tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_t_" + str(hop)))
+            for hop in range(self.n_hop):
+                self.memories_h.append(
+                    tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_h_" + str(hop)))
+                self.memories_r.append(
+                    tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_r_" + str(hop)))
+                self.memories_t.append(
+                    tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_t_" + str(hop)))
 
     def _build_embeddings(self):
-        self.entity_emb_matrix = tf.get_variable(name="entity_emb_matrix", dtype=tf.float64,
-                                                 shape=[self.n_entity, self.dim],
-                                                 initializer=tf.contrib.layers.xavier_initializer())
-        self.relation_emb_matrix = tf.get_variable(name="relation_emb_matrix", dtype=tf.float64,
-                                                   shape=[self.n_relation, self.dim, self.dim],
-                                                   initializer=tf.contrib.layers.xavier_initializer())
+        with tf.variable_scope('input'):
+            self.entity_emb_matrix = tf.get_variable(name="entity_emb_matrix", dtype=tf.float64,
+                                                     shape=[self.n_entity, self.dim],
+                                                     initializer=tf.contrib.layers.xavier_initializer())
+            self.relation_emb_matrix = tf.get_variable(name="relation_emb_matrix", dtype=tf.float64,
+                                                       shape=[self.n_relation, self.dim, self.dim],
+                                                       initializer=tf.contrib.layers.xavier_initializer())
 
     def _build_model(self):
         # transformation matrix for updating item embeddings at the end of each hop
@@ -81,7 +83,6 @@ class RippleNet(object):
 
             # [batch_size, n_memory, dim]
             Rh = tf.squeeze(tf.matmul(self.r_emb_list[hop], h_expanded), axis=3)
-
             # [batch_size, dim, 1]
             v = tf.expand_dims(self.item_embeddings, axis=2)
 
