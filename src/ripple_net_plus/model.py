@@ -21,8 +21,6 @@ class RippleNetPlus(object):
         self.l2_weight = args.l2_weight
         self.lr = args.lr
         self.n_memory = args.n_memory
-        self.item_update_mode = args.item_update_mode
-        self.using_all_hops = args.using_all_hops
         self.embed_size= args.embed_size
         self.batch_size = args.batch_size
 
@@ -162,8 +160,6 @@ class RippleNetPlus(object):
                 self.l2_loss += tf.reduce_mean(tf.reduce_sum(self.h_emb_list[hop] * self.h_emb_list[hop]))
                 self.l2_loss += tf.reduce_mean(tf.reduce_sum(self.t_emb_list[hop] * self.t_emb_list[hop]))
                 self.l2_loss += tf.reduce_mean(tf.reduce_sum(self.r_emb_list[hop] * self.r_emb_list[hop]))
-                if self.item_update_mode == "replace nonlinear" or self.item_update_mode == "plus nonlinear":
-                    self.l2_loss += tf.nn.l2_loss(self.transform_matrix)
             self.l2_loss = self.l2_weight * self.l2_loss
 
             self.loss = self.base_loss + self.kge_loss + self.l2_loss
