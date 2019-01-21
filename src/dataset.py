@@ -6,7 +6,7 @@ import logging
 import torch
 logger = logging.getLogger()
 class Expdata(Dataset):
-    def __init__(self, root_path,dataset,n_hop,n_memory, mode='train'):
+    def __init__(self, root_path,dataset,n_hop,n_memory,dim, mode='train'):
         # data load
         self.data_path = Path(root_path,dataset)
 
@@ -16,9 +16,11 @@ class Expdata(Dataset):
         self.n_hop = n_hop
         # size of each hop
         self.n_memory = n_memory
+        # dims of each embeding
+        self.dim =dim
         #[(user_0,item_0,label_0),(user_1,item_1,label_1)...]
         self.train_data, self.eval_data, self.test_data, self.user_history_dict = self.load_rating()
-        self.kg = self.load_kg()
+        self.kg, self.n_relation, self.n_entity = self.load_kg()
         # user -> [(hop_0_heads, hop_0_relations, hop_0_tails), (hop_1_heads, hop_1_relations, hop_1_tails), ...]
         self.ripple_set = self.get_ripple_set(self.n_hop,n_memory, self.kg, self.user_history_dict)
 
@@ -28,6 +30,7 @@ class Expdata(Dataset):
             'eval': self.eval_data,
             'test': self.test_data,
         }
+
         self.data = self.dataset_switch[mode]
 
     def __len__(self):
@@ -46,7 +49,10 @@ class Expdata(Dataset):
             memory_h.append(self.ripple_set[user][i][0])
             memory_r.append(self.ripple_set[user][i][1])
             memory_t.append(self.ripple_set[user][i][2])
-        return item, label, torch.Tensor(memory_h), torch.Tensor(memory_h), torch.Tensor(memory_h)
+        return item, label, torch.Tensor(memory_h), torch.Tensor(memory_r), torch.Tensor(memory_t)
+    def get_n_enitity_relation(self):
+        return self.n_entity,self.n_relation
+
     def set_mode(self,mode):
         self.data = self.dataset_switch[mode]
     def load_rating(self):
@@ -115,11 +121,12 @@ class Expdata(Dataset):
 
         n_entity = len(set(kg_np[:, 0]) | set(kg_np[:, 2]))
         n_relation = len(set(kg_np[:, 1]))
+
         logging.debug('entity num:{}\n relation num: {}'.format(n_entity, n_relation))
 
         kg = self.construct_kg(kg_np)
 
-        return  kg
+        return  kg,n_relation,n_entity
     def construct_kg(self,kg_np):
         logger.info('constructing knowledge graph ...')
         kg = collections.defaultdict(list)
@@ -166,6 +173,12 @@ class Expdata(Dataset):
 
         return ripple_set
 
+    # def build_indicator(self):
+    #     logger.info('build indicator...')
+    #     indicator=torch.zeros(self.n_relation,self.n_entity,self.n_entity)
+    #     for i in range(self.kg.size()[0]):
+    #         indicator[self.kg[i,1],self.kg[i,0],self.kg[i,2]] = 1
+    #     return indicator
 
 
 
