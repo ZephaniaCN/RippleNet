@@ -4,7 +4,8 @@ from pathlib import Path
 from src.tensorflow.model.ripple_net import RippleNet
 from src.tensorflow.model.ripple_net_plus import RippleNetPlus
 from src.tensorflow.data_loader import Dataset
-
+from logging import getLogger
+logger = getLogger()
 
 class summary_writers:
     def __init__(self,log_path:Path, file_name:Path):
@@ -63,20 +64,21 @@ class EpochTrainer:
 class Experiement:
     def __init__(self,model,dataset_path, dataset,
                  dim,n_hop,kge_weight,l2_weight,lr,n_memory,
-                 log_path,file_name,n_epoch,batch_size):
+                 log_path,model_path,file_name,n_epoch,batch_size):
         model_dict={
             'ripple_net': RippleNet,
             'ripple_net_plus':RippleNetPlus
         }
         self.n_epoch = n_epoch
         self.batch_size = batch_size
+        self.model_path = model_path/'{}_model.ckpt'.format(str(file_name))
         self.dataset = Dataset(dataset_path,dataset,n_hop,n_memory,dim)
         n_entity, n_relation = self.dataset.get_n_enitity_relation()
         self.model = model_dict[model](dim,n_hop,kge_weight,l2_weight,lr,n_memory, n_entity, n_relation)
         self.trainer = EpochTrainer(self.model,self.dataset)
         self.summary_writer = summary_writers(log_path,file_name)
 
-    def run(self,show_loss=True,show_eval=True,show_train_eval=False,test=False):
+    def run(self,save_model=False,show_loss=True,show_eval=True,show_train_eval=False,test=False):
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             self.summary_writer.set_session(sess)
@@ -99,5 +101,8 @@ class Experiement:
                     self.summary_writer.set_mode('eval')
                     self.summary_writer.simple_value('auc', auc, step)
                     self.summary_writer.simple_value('acc', acc, step)
+            if save_model:
+                saver = tf.train.Saver()
+                save_path = saver.save(sess, self.model_path)
+                logger.info("Model saved in path: {}" .format(save_path))
             return auc, acc
-                
