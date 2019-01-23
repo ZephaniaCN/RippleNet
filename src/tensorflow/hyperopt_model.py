@@ -14,7 +14,7 @@ np.random.seed(589)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='movie', help='which dataset to use')
-parser.add_argument('--model',type=str,default='ripple_net_plus', help='which model to use')
+parser.add_argument('--model',type=str,default='model', help='which model to use')
 parser.add_argument('--dim', type=int, default=16, help='dimension of entity and relation embeddings')
 parser.add_argument('--n_hop', type=int, default=4, help='maximum hops origin:2')
 parser.add_argument('--kge_weight', type=float, default=0.01, help='weight of the KGE term')

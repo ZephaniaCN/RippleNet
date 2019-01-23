@@ -15,7 +15,7 @@ class RippleNetPlus(object):
     def _parse_args(self, args, n_entity, n_relation):
         self.n_entity = n_entity
         self.n_relation = n_relation
-        self.dim = args.dim
+        self.dim = 'args.dim'
         self.n_hop = args.n_hop
         self.kge_weight = args.kge_weight
         self.l2_weight = args.l2_weight

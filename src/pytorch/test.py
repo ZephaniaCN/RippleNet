@@ -1,20 +1,17 @@
-from torch.utils.data import DataLoader
 import logging
 import torch
-import numpy as np
-from concurrent import futures
-import time
-import threading
-from torch.autograd import Variable
 from pathlib import Path
 from tensorboardX import SummaryWriter
-from src.dataset import Expdata
-from src.ripple_net import RippleNetPlus
-from src.trainer import Trainer
+from src.pytorch.dataset import Expdata
+from src.pytorch.ripple_net import RippleNetPlus
+from src.pytorch.experiment import Trainer
+
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 logger = logging.getLogger()
-logger.setLevel(level=logging.INFO)
+logger.setLevel(level=logging.DEBUG)
 
 batch_size = 1024
 data_path = '../data'

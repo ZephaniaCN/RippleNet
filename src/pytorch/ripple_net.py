@@ -175,7 +175,7 @@ class RippleNetPlus(nn.Module):
 
         kg_loss,l2_loss = self.cal_kg_loss(hs,Rs,ts)
 
-        #logger.debug('kge_loss:'.format(kg_loss))
+        logger.debug('kge_loss:{}'.format(kg_loss.item()))
         loss = base_loss + kg_loss +l2_loss
 
         return loss
@@ -183,6 +183,7 @@ class RippleNetPlus(nn.Module):
     def cal_base_loss(self,output,labels):
         bce_loss_fn = torch.nn.BCEWithLogitsLoss(reduce=True)
         base_loss = bce_loss_fn(output, labels)
+        logger.debug('base_loss:{}'.format(base_loss.item()))
         return base_loss
 
 
