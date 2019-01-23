@@ -4,25 +4,23 @@ from sklearn.metrics import roc_auc_score
 
 
 class RippleNetPlus(object):
-    def __init__(self, args, n_entity, n_relation):
-        self._parse_args(args, n_entity, n_relation)
+    def __init__(self, dim,n_hop,kge_weight,l2_weight,lr,n_memory, n_entity, n_relation):
+        self.n_entity = n_entity
+        self.n_relation = n_relation
+        self.dim = dim
+        self.n_hop = n_hop
+        self.kge_weight = kge_weight
+        self.l2_weight = l2_weight
+        self.lr = lr
+        self.n_memory = n_memory
         self._build_inputs()
         self._build_embeddings()
         self._build_model()
         self._build_loss()
         self._build_train()
 
-    def _parse_args(self, args, n_entity, n_relation):
-        self.n_entity = n_entity
-        self.n_relation = n_relation
-        self.dim = 'args.dim'
-        self.n_hop = args.n_hop
-        self.kge_weight = args.kge_weight
-        self.l2_weight = args.l2_weight
-        self.lr = args.lr
-        self.n_memory = args.n_memory
-        self.embed_size= args.embed_size
-        self.batch_size = args.batch_size
+
+
 
     def _build_inputs(self):
         with tf.variable_scope('input'):
@@ -127,7 +125,7 @@ class RippleNetPlus(object):
 
             # two layer nn
             attention = tf.contrib.layers.fully_connected(feature_vec,
-                                                          self.embed_size,
+                                                          self.dim,
                                                           activation_fn=tf.nn.tanh,
                                                           reuse=tf.AUTO_REUSE, scope="fc1")
 

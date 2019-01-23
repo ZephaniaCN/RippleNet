@@ -4,25 +4,21 @@ from sklearn.metrics import roc_auc_score
 
 
 class RippleNet(object):
-    def __init__(self, args, n_entity, n_relation):
-        self._parse_args(args, n_entity, n_relation)
+    def __init__(self, dim,n_hop,kge_weight,l2_weight,lr,n_memory, n_entity, n_relation):
+        self.n_entity = n_entity
+        self.n_relation = n_relation
+        self.dim = dim
+        self.n_hop = n_hop
+        self.kge_weight = kge_weight
+        self.l2_weight = l2_weight
+        self.lr = lr
+        self.n_memory = n_memory
         self._build_inputs()
         self._build_embeddings()
         self._build_model()
         self._build_loss()
         self._build_train()
 
-    def _parse_args(self, args, n_entity, n_relation):
-        self.n_entity = n_entity
-        self.n_relation = n_relation
-        self.dim = args.dim
-        self.n_hop = args.n_hop
-        self.kge_weight = args.kge_weight
-        self.l2_weight = args.l2_weight
-        self.lr = args.lr
-        self.n_memory = args.n_memory
-        self.item_update_mode = args.item_update_mode
-        self.using_all_hops = args.using_all_hops
 
     def _build_inputs(self):
         with tf.variable_scope('input'):
