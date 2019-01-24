@@ -101,23 +101,23 @@ class RippleNet(object):
         return o_list
 
     def update_item_embedding(self, item_embeddings, o):
-        if self.item_update_mode == "replace":
-            item_embeddings = o
-        elif self.item_update_mode == "plus":
-            item_embeddings = item_embeddings + o
-        elif self.item_update_mode == "replace_transform":
-            item_embeddings = tf.matmul(o, self.transform_matrix)
-        elif self.item_update_mode == "plus_transform":
-            item_embeddings = tf.matmul(item_embeddings + o, self.transform_matrix)
-        else:
-            raise Exception("Unknown item updating mode: " + self.item_update_mode)
+        # if self.item_update_mode == "replace":
+        #     item_embeddings = o
+        # elif self.item_update_mode == "plus":
+        #     item_embeddings = item_embeddings + o
+        # elif self.item_update_mode == "replace_transform":
+        #     item_embeddings = tf.matmul(o, self.transform_matrix)
+        # elif self.item_update_mode == "plus_transform":
+        item_embeddings = tf.matmul(item_embeddings + o, self.transform_matrix)
+        # else:
+        #     raise Exception("Unknown item updating mode: " + self.item_update_mode)
         return item_embeddings
 
     def predict(self, item_embeddings, o_list):
         y = o_list[-1]
-        if self.using_all_hops:
-            for i in range(self.n_hop - 1):
-                y += o_list[i]
+
+        for i in range(self.n_hop - 1):
+             y += o_list[i]
 
         # [batch_size]
         scores = tf.reduce_sum(item_embeddings * y, axis=1)
@@ -139,8 +139,7 @@ class RippleNet(object):
             self.l2_loss += tf.reduce_mean(tf.reduce_sum(self.h_emb_list[hop] * self.h_emb_list[hop]))
             self.l2_loss += tf.reduce_mean(tf.reduce_sum(self.t_emb_list[hop] * self.t_emb_list[hop]))
             self.l2_loss += tf.reduce_mean(tf.reduce_sum(self.r_emb_list[hop] * self.r_emb_list[hop]))
-            if self.item_update_mode == "replace nonlinear" or self.item_update_mode == "plus nonlinear":
-                self.l2_loss += tf.nn.l2_loss(self.transform_matrix)
+            self.l2_loss += tf.nn.l2_loss(self.transform_matrix)
         self.l2_loss = self.l2_weight * self.l2_loss
 
         self.loss = self.base_loss + self.kge_loss + self.l2_loss
@@ -155,8 +154,8 @@ class RippleNet(object):
         self.optimizer = optimizer.apply_gradients(zip(gradients, variables))
         '''
 
-    def train(self, sess, summary, feed_dict):
-        return sess.run([self.optimizer, self.loss, summary], feed_dict)
+    def train(self, sess, feed_dict):
+        return sess.run([self.optimizer, self.loss], feed_dict)
 
     def eval(self, sess, feed_dict):
         labels, scores = sess.run([self.labels, self.scores_normalized], feed_dict)

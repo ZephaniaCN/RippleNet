@@ -7,7 +7,7 @@ THRESHOLD = dict({'movie': 4, 'book': 0, 'news': 0})
 
 
 def read_item_index_to_entity_id_file():
-    file = '/home/lzf/PycharmProjects/RippleNet/data/' + DATASET + '/item_index2entity_id_rehashed.txt'
+    file = '../../data/' + DATASET + '/item_index2entity_id_rehashed.txt'
     print('reading item index to entity id file: ' + file + ' ...')
     i = 0
     for line in open(file, encoding='utf-8').readlines():

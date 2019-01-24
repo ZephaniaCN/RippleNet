@@ -132,7 +132,7 @@ class Dataset:
             kg[head].append((tail, relation))
         return kg
     def get_ripple_set(self,n_hop,n_memory, kg, user_history_dict):
-        print('constructing ripple set ...')
+        logger.info('constructing ripple set ...')
 
         # user -> [(hop_0_heads, hop_0_relations, hop_0_tails), (hop_1_heads, hop_1_relations, hop_1_tails), ...]
         ripple_set = collections.defaultdict(list)
