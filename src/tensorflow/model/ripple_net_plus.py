@@ -4,7 +4,7 @@ from sklearn.metrics import roc_auc_score
 
 
 class RippleNetPlus(object):
-    def __init__(self, dim,n_hop,kge_weight,l2_weight,lr,n_memory, n_entity, n_relation):
+    def __init__(self, dim,n_hop,kge_weight,l2_weight,lr,n_memory, n_entity, n_relation,dropout,predict_mode):
         self.n_entity = n_entity
         self.n_relation = n_relation
         self.dim = dim
@@ -12,7 +12,9 @@ class RippleNetPlus(object):
         self.kge_weight = kge_weight
         self.l2_weight = l2_weight
         self.lr = lr
+        self.dropout = dropout
         self.n_memory = n_memory
+        self.predict_mode = predict_mode
         self._build_inputs()
         self._build_embeddings()
         self._build_model()
@@ -55,6 +57,13 @@ class RippleNetPlus(object):
         # [batch size, dim]
         self.item_embeddings = tf.nn.embedding_lookup(self.entity_emb_matrix, self.items)
 
+        self.rnns=[tf.contrib.rnn.DropoutWrapper(
+            tf.contrib.cudnn_rnn.CudnnCompatibleGRUCell(self.dim,
+                                                        kernel_initializer=tf.keras.initializers.Orthogonal())
+            ,input_keep_prob = self.dropout
+        )
+             for _ in range(self.n_hop)]
+
         self.h_emb_list = []
         self.r_emb_list = []
         self.t_emb_list = []
@@ -68,9 +77,9 @@ class RippleNetPlus(object):
             # [batch size, n_memory, dim]
             self.t_emb_list.append(tf.nn.embedding_lookup(self.entity_emb_matrix, self.memories_t[i]))
 
-        o = self.eposid_memory()
+        o,m = self.eposid_memory()
 
-        self.scores = tf.squeeze(self.predict(self.item_embeddings, o))
+        self.scores = tf.squeeze(self.predict(self.item_embeddings, o,m))
         self.scores_normalized = tf.sigmoid(self.scores)
 
     def eposid_memory(self):
@@ -90,9 +99,9 @@ class RippleNetPlus(object):
                 # [batch_size, dim]
                 o = self.attention_gate(v,prev_memory,Rh,t)
 
-                o, prev_memory = self.update_memory(o,prev_memory)
+                o, prev_memory = self.update_memory(o,prev_memory,hop)
 
-            return o
+            return o,prev_memory
 
 
     def attention_gate(self,v,prev_memory,Rh,t):
@@ -107,11 +116,9 @@ class RippleNetPlus(object):
             o.set_shape([None, self.dim])
             return o
 
-    def update_memory(self,o,prev_memory):
-        with tf.variable_scope("update_memory",reuse=tf.AUTO_REUSE):
-            self.rnn = tf.contrib.rnn.GRUCell(self.dim)
-            output, update_memory = self.rnn(o, prev_memory)
-            return output, update_memory
+    def update_memory(self,o,prev_memory,hop):
+        output, update_memory = self.rnns[hop](o, prev_memory)
+        return output, update_memory
 
     def get_attention(self, q_vec, prev_memory, fact_vec):
         with tf.variable_scope("attention", reuse=tf.AUTO_REUSE):
@@ -135,10 +142,18 @@ class RippleNetPlus(object):
                                                           reuse=tf.AUTO_REUSE, scope="fc2")
             return attention
 
-    def predict(self, item_embeddings, o):
-        with tf.variable_scope('predict'):
+    def predict(self, item_embeddings, o,m):
+        with tf.variable_scope('predict',reuse=tf.AUTO_REUSE):
         # [batch_size]
-            scores = tf.reduce_sum(item_embeddings * o, axis=1)
+            if self.predict_mode == 'basic':
+                scores = tf.reduce_sum(item_embeddings * o, axis=1)
+
+            if self.predict_mode == 'dense':
+                rnn_output = tf.nn.dropout(m, self.dropout)
+                o = tf.layers.dense(tf.concat([rnn_output, item_embeddings], 1),
+                                 self.dim,
+                                 activation=None)
+                scores = tf.reduce_sum(item_embeddings * o, axis=1)
             return scores
 
     def _build_loss(self):

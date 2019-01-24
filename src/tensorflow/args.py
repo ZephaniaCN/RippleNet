@@ -53,6 +53,8 @@ exp2_args = {
     'l2_weight':1e-7,
     'lr':0.02,
     'n_memory':32,
+    'dropout':0.8,
+    'predict_mode':'dense',
     'log_path':Path('../../logs'),
     'model_path':Path('../../models'),
     'file_name':'ripple_net_plus',
@@ -97,4 +99,7 @@ def args_convert(args):
         'save_model': args['save_model'],
         'show_train_eval': args['show_train_eval']
     }
+    if args['model']=='ripple_net_plus_dense':
+        target_args['static_args']['model_args']['dropout']=args['dropout']
+        target_args['static_args']['model_args']['predict_mode']=args['predict_mode']
     return target_args
