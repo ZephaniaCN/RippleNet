@@ -1,5 +1,6 @@
 import tensorflow as tf
 from pathlib import Path
+import os
 import numpy as np
 from sklearn.metrics import roc_auc_score, f1_score, recall_score
 from src.tensorflow.model.ripple_net import RippleNet
@@ -37,6 +38,10 @@ class summary_writers:
     def simple_values(self, values_dict:dict, epoch):
         for key,value in values_dict.items():
             self.simple_value(key, value, epoch)
+
+    def flush(self):
+        for writer in self.writer_dict.values():
+            tf.contrib.summary.flush(writer)
 
 def auc_cal(scores, labels):
     auc = roc_auc_score(y_true=labels, y_score=scores)
@@ -127,10 +132,16 @@ class Experiement:
                     self.summary_writer.set_mode('test')
                     self.summary_writer.simple_values(eval_dict,step)
 
+            self.summary_writer.flush()
+
             if save_model:
+                if not Path(self.model_path).exists():
+                    os.mkdir(self.model_path)
                 saver = tf.train.Saver()
                 save_path = saver.save(sess, self.model_path)
                 logger.info("Model saved in path: {}" .format(save_path))
+
+
             return eval_dict
 
 def run_exp(args):

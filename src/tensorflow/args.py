@@ -12,7 +12,7 @@ ripple_net_movie_args = {
     'n_memory':32,
     'log_path':Path('../../logs'),
     'model_path':Path('../../models'),
-    'file_name':'origin_ripple_net',
+    'file_name':'ripple_net_movie',
     'n_epoch':10,
     'batch_size':1024,
     'show_eval':True,
@@ -87,7 +87,7 @@ def args_convert(args):
        },
         'model':args['model'],
         'log_path': args['log_path'],
-        'model_path': args['model_path'],
+        'model_path': args['model_path']/args['file_name'],
         'file_name': args['file_name'],
         'n_epoch': args['n_epoch'],
         'batch_size': args['batch_size']
