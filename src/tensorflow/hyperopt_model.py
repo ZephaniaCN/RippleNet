@@ -2,7 +2,7 @@
 from concurrent import futures
 from hyperopt import Trials
 from src.tensorflow.train import  run_exp
-from src.tensorflow.args import args_convert, exp2_args
+from src.tensorflow.args import args_convert, ripple_net_plus_args
 import time
 import logging
 logger = logging.getLogger()
@@ -43,9 +43,12 @@ def model_thread(args):
 int_list=['n_hop','n_memory','dim']
 
 def objective(hyperparameters):
-    args = {ripple_}
+    for key in int_list:
+        hyperparameters[key] = int(hyperparameters[key])
 
-    acc = model_thread(args, data_info)
+    args = {**ripple_net_plus_args, **hyperparameters}
+    args['filename']='{}'.format(args['filename'],)
+    res_dict = model_thread(args)
 
-    return 1-acc
+    return 1-res_dict['acc']
 

@@ -22,7 +22,7 @@ class summary_writers:
 
     def set_session(self, sess):
         for key in self.writer_dict.keys():
-            path = self.log_path / key / self.file_name
+            path = self.log_path /self.file_name/ key
             self.writer_dict[key] = tf.summary.FileWriter(str(path), sess.graph)
 
     def set_mode(self, mode:str):
@@ -41,7 +41,7 @@ class summary_writers:
 
     def flush(self):
         for writer in self.writer_dict.values():
-            tf.contrib.summary.flush(writer)
+            writer.flush()
 
 def auc_cal(scores, labels):
     auc = roc_auc_score(y_true=labels, y_score=scores)
@@ -101,6 +101,8 @@ class Experiement:
             'ripple_net_plus':RippleNetPlus
         }
         self.n_epoch = n_epoch
+        if not Path(model_path).exists():
+            os.mkdir(model_path)
         self.model_path = model_path/'{}_model.ckpt'.format(str(file_name))
         self.model_path = str(self.model_path)
         self.dataset = Dataset(**dataset_args)
@@ -135,8 +137,6 @@ class Experiement:
             self.summary_writer.flush()
 
             if save_model:
-                if not Path(self.model_path).exists():
-                    os.mkdir(self.model_path)
                 saver = tf.train.Saver()
                 save_path = saver.save(sess, self.model_path)
                 logger.info("Model saved in path: {}" .format(save_path))
