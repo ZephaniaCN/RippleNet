@@ -43,7 +43,7 @@ ripple_net_book_args = {
     'show_train_eval': True
 }
 # ripple net plus default args
-exp2_args = {
+ripple_net_plus_args = {
     'model':'ripple_net_plus',
     'dataset_path': Path('../../data'),
     'dataset':'movie',

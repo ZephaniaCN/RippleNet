@@ -1,6 +1,5 @@
 import tensorflow as tf
-import numpy as np
-from sklearn.metrics import roc_auc_score
+
 
 
 class RippleNetPlus(object):
@@ -20,8 +19,6 @@ class RippleNetPlus(object):
         self._build_model()
         self._build_loss()
         self._build_train()
-
-
 
 
     def _build_inputs(self):
@@ -190,9 +187,7 @@ class RippleNetPlus(object):
     def train(self, sess, feed_dict):
         return sess.run([self.optimizer, self.loss], feed_dict)
 
-    def eval(self, sess, feed_dict):
+    def eval_data(self, sess, feed_dict):
         labels, scores = sess.run([self.labels, self.scores_normalized], feed_dict)
-        auc = roc_auc_score(y_true=labels, y_score=scores)
-        predictions = [1 if i >= 0.5 else 0 for i in scores]
-        acc = np.mean(np.equal(predictions, labels))
-        return auc, acc
+
+        return labels, scores

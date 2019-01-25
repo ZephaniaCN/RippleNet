@@ -1,6 +1,7 @@
 import tensorflow as tf
-import numpy as np
 from pathlib import Path
+import numpy as np
+from sklearn.metrics import roc_auc_score, f1_score, recall_score
 from src.tensorflow.model.ripple_net import RippleNet
 from src.tensorflow.model.ripple_net_plus import RippleNetPlus
 from src.tensorflow.data_loader import Dataset
@@ -33,11 +34,39 @@ class summary_writers:
             self.writer_dict[self.mode].add_summary(summary, epoch)
         except:
             raise NotImplementedError('writer not set sess, use set_session')
+    def simple_values(self, values_dict:dict, epoch):
+        for key,value in values_dict.items():
+            self.simple_value(key, value, epoch)
+
+def auc_cal(scores, labels):
+    auc = roc_auc_score(y_true=labels, y_score=scores)
+    return auc
+def acc_cal(scores, labels):
+    predictions = [1 if i >= 0.5 else 0 for i in scores]
+    acc = np.mean(np.equal(predictions, labels))
+    return acc
+def recall_cal(scores, labels):
+    predictions = (scores+0.5).astype(int)
+    y_true = labels.astype(int)
+    recall = recall_score(y_true=y_true,y_pred=predictions)
+    return recall
+def f1_cal(scores, labels):
+    predictions = (scores + 0.5).astype(int)
+    y_true = labels.astype(int)
+    f1 = f1_score(y_true=y_true, y_pred=predictions)
+    return f1
+
 class EpochTrainer:
     def __init__(self, model, dataset:Dataset, batch_size):
         self.model = model
         self.dataset = dataset
         self.batch_size = batch_size
+        self.eval_fns = {
+            'auc': auc_cal,
+            'acc': acc_cal,
+            'recall': recall_cal,
+            'f1':f1_cal
+        }
 
     def train(self,  sess):
         self.dataset.set_mode('train')
@@ -50,16 +79,14 @@ class EpochTrainer:
         self.dataset.set_mode(mode)
         dataloader = self.dataset.data_loader(self.batch_size, self.model)
 
-        auc_list = []
-        acc_list = []
+        eval_list = {key:[] for key in self.eval_fns.keys()}
         for feed_dict in dataloader:
-            batch_auc,batch_acc = self.model.eval(sess, feed_dict)
-            auc_list.append(batch_auc)
-            acc_list.append(batch_acc)
+            labels, scores = self.model.eval_data(sess, feed_dict)
+            for key in self.eval_fns.keys():
+                eval_list[key].append(self.eval_fns[key](scores, labels))
 
-        auc,acc = float(np.mean(auc_list)), float(np.mean(acc_list))
+        return {key:float(np.mean(eval_list[key])) for key in self.eval_fns.keys()}
 
-        return auc, acc
 
 class Experiement:
     def __init__(self,model,model_args,dataset_args,
@@ -87,25 +114,28 @@ class Experiement:
                     self.summary_writer.set_mode('train')
                     self.summary_writer.simple_value('loss',loss, step)
                 if show_train_eval:
-                    auc,acc = self.trainer.eval(sess,'train')
-                    self.summary_writer.simple_value('auc', auc, step)
-                    self.summary_writer.simple_value('acc', acc, step)
+                    eval_dict = self.trainer.eval(sess,'train')
+                    self.summary_writer.simple_values(eval_dict,step)
+
                 if show_eval:
-                    auc,acc = self.trainer.eval(sess, 'eval')
+                    eval_dict = self.trainer.eval(sess, 'eval')
                     self.summary_writer.set_mode('eval')
-                    self.summary_writer.simple_value('auc', auc, step)
-                    self.summary_writer.simple_value('acc', acc, step)
+                    self.summary_writer.simple_values(eval_dict,step)
+
                 if test:
-                    auc, acc = self.trainer.eval(sess, 'test')
+                    eval_dict = self.trainer.eval(sess, 'test')
                     self.summary_writer.set_mode('test')
-                    self.summary_writer.simple_value('auc', auc, step)
-                    self.summary_writer.simple_value('acc', acc, step)
+                    self.summary_writer.simple_values(eval_dict,step)
+
             if save_model:
                 saver = tf.train.Saver()
                 save_path = saver.save(sess, self.model_path)
                 logger.info("Model saved in path: {}" .format(save_path))
-            return auc, acc
+            return eval_dict
 
-def run_exp(static_args, runtime_args):
+def run_exp(args):
+    static_args = args['static_args']
+    runtime_args = args['runtime_args']
     exp = Experiement(**static_args)
-    exp.run(**runtime_args)
+    res = exp.run(**runtime_args)
+    return res
