@@ -19,7 +19,8 @@ ripple_net_movie_args = {
     'show_loss':True,
     'test':True,
     'save_model':True,
-    'show_train_eval':True
+    'show_train_eval':True,
+    'max_loss':100
 }
 ripple_net_book_args = {
     'model': 'ripple_net',
@@ -40,7 +41,9 @@ ripple_net_book_args = {
     'show_loss': True,
     'test': True,
     'save_model': True,
-    'show_train_eval': True
+    'show_train_eval': True,
+    'max_loss': 100
+
 }
 # ripple net plus default args
 ripple_net_plus_movie_args = {
@@ -64,7 +67,8 @@ ripple_net_plus_movie_args = {
     'show_loss':True,
     'test':True,
     'save_model':True,
-    'show_train_eval':True
+    'show_train_eval':True,
+    'max_loss': 100
 }
 ripple_net_plus_book_args = {
     'model':'ripple_net_plus',
@@ -87,7 +91,8 @@ ripple_net_plus_book_args = {
     'show_loss':True,
     'test':True,
     'save_model':True,
-    'show_train_eval':True
+    'show_train_eval':True,
+    'max_loss': 100
 }
 
 
@@ -114,7 +119,8 @@ def args_convert(args):
         'model_path': args['model_path']/args['file_name'],
         'file_name': args['file_name'],
         'n_epoch': args['n_epoch'],
-        'batch_size': args['batch_size']
+        'batch_size': args['batch_size'],
+        'max_loss':args['max_loss']
     }
     target_args['runtime_args']={
         'show_eval': args['show_eval'],

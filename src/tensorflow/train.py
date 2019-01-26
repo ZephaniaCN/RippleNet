@@ -62,10 +62,11 @@ def f1_cal(scores, labels):
     return f1
 
 class EpochTrainer:
-    def __init__(self, model, dataset:Dataset, batch_size):
+    def __init__(self, model, dataset:Dataset, batch_size, max_loss):
         self.model = model
         self.dataset = dataset
         self.batch_size = batch_size
+        self.max_loss = max_loss
         self.eval_fns = {
             'auc': auc_cal,
             'acc': acc_cal,
@@ -78,6 +79,8 @@ class EpochTrainer:
         dataloader = self.dataset.data_loader(self.batch_size, self.model)
         for feed_dict in dataloader:
             _, loss = self.model.train(sess, feed_dict)
+            if loss>self.max_loss:
+                break
         return loss
 
     def eval(self,sess, mode):
@@ -95,7 +98,7 @@ class EpochTrainer:
 
 class Experiement:
     def __init__(self,model,model_args,dataset_args,
-                 log_path,model_path,file_name,n_epoch,batch_size):
+                 log_path,model_path,file_name,n_epoch,batch_size,max_loss=20):
         model_dict={
             'ripple_net': RippleNet,
             'ripple_net_plus':RippleNetPlus
@@ -105,10 +108,11 @@ class Experiement:
             os.mkdir(model_path)
         self.model_path = model_path/'{}_model.ckpt'.format(str(file_name))
         self.model_path = str(self.model_path)
+        self.max_loss = max_loss
         self.dataset = Dataset(**dataset_args)
         n_entity, n_relation = self.dataset.get_n_enitity_relation()
         self.model = model_dict[model](**model_args,n_entity=n_entity,n_relation=n_relation)
-        self.trainer = EpochTrainer(self.model,self.dataset,batch_size)
+        self.trainer = EpochTrainer(self.model,self.dataset,batch_size,max_loss)
         self.summary_writer = summary_writers(log_path,file_name)
 
     def run(self,save_model=False,show_loss=True,show_eval=True,show_train_eval=False,test=False):
@@ -133,6 +137,9 @@ class Experiement:
                     eval_dict = self.trainer.eval(sess, 'test')
                     self.summary_writer.set_mode('test')
                     self.summary_writer.simple_values(eval_dict,step)
+
+                if loss > self.max_loss:
+                    break
 
             self.summary_writer.flush()
 
