@@ -6,7 +6,6 @@ from src.tensorflow.args import args_convert, ripple_net_plus_book_args
 import time
 import logging
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 bayes_trials = Trials()
 
 
@@ -20,18 +19,18 @@ def model_thread(args):
     exector = futures.ProcessPoolExecutor(max_workers=1)
     f = exector.submit(run_exp,args_convert(args))
     while True:
-        time.sleep(10)
+        time.sleep(100)
         if f.exception():
+            logging.debug('exception:',f.exception())
             logging.debug('check thread alive')
             try:
                 exector.shutdown(wait=False)
             except:
                 pass
             exector = futures.ProcessPoolExecutor(max_workers=1)
-            logger.debug('chage batch_size and ')
             args['batch_size']=int(args['batch_size']/2)
             args['n_epoch'] += 10
-
+            logger.info('batch_size:{}\nepoch:{}'.format(args['batch_size'],args['n_epoch']))
             f = exector.submit(run_exp,args_convert(args))
             continue
         if f.done() and not f.exception():
@@ -47,8 +46,11 @@ def objective(hyperparameters):
         hyperparameters[key] = int(hyperparameters[key])
 
     args = {**ripple_net_plus_book_args, **hyperparameters}
-    args['filename']='{}_{:2f}lr_{:2f}kg_{:2f}l2_{:2f}dp_{}m_{}h_{}'.format(args['filename'],args['lr'])
+    args['file_name']='{}_{:.1e}lr_{:.1e}kg_{:.1e}l2_{:.2f}dp_{}m_{}h_{}d_{}'.format(
+        args['file_name'],args['lr'],args['kge_weight'],args['l2_weight'],args['dropout'],
+        args['n_memory'],args['n_hop'],args['dim'],args['predict_mode']
+    )
     res_dict = model_thread(args)
 
-    return 1-res_dict['acc']
+    return 1-res_dict['auc']
 
