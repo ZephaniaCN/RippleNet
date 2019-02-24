@@ -74,6 +74,9 @@ class EpochTrainer:
             'f1':f1_cal
         }
 
+    def restore(self, sess,model_path):
+        self.model.restore(sess, tf.train.latest_checkpoint(model_path))
+
     def train(self,  sess):
         self.dataset.set_mode('train')
         dataloader = self.dataset.data_loader(self.batch_size, self.model)
@@ -115,11 +118,20 @@ class Experiement:
         self.trainer = EpochTrainer(self.model,self.dataset,batch_size,max_loss)
         self.summary_writer = summary_writers(log_path,file_name)
 
-    def run(self,save_model=False,show_loss=True,show_eval=True,show_train_eval=False,test=False):
+    def run(self,save_model=False,show_loss=True,show_eval=True,show_train_eval=False,test=False,load=False):
         with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
+            try:
+                sess.run(tf.global_variables_initializer())
+            except:
+                sess.close()
+                raise Exception('sess problem')
             self.summary_writer.set_session(sess)
             for step in range(self.n_epoch):
+                if load:
+                    if Path(self.model_path).exists():
+                        self.trainer.restore(sess, self.model_path)
+                        eval_dict = self.trainer.eval(sess, 'eval')
+                        return eval_dict
                 loss = self.trainer.train(sess)
                 if show_loss:
                     self.summary_writer.set_mode('train')

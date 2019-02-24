@@ -20,6 +20,7 @@ ripple_net_movie_args = {
     'test':True,
     'save_model':True,
     'show_train_eval':True,
+    'load':True,
     'max_loss':100
 }
 ripple_net_book_args = {
@@ -42,6 +43,7 @@ ripple_net_book_args = {
     'test': True,
     'save_model': True,
     'show_train_eval': True,
+    'load':True,
     'max_loss': 100
 
 }
@@ -68,6 +70,7 @@ ripple_net_plus_movie_args = {
     'test':True,
     'save_model':True,
     'show_train_eval':True,
+    'load':True,
     'max_loss': 100
 }
 ripple_net_plus_book_args = {
@@ -91,7 +94,8 @@ ripple_net_plus_book_args = {
     'show_loss':True,
     'test':True,
     'save_model':True,
-    'show_train_eval':True,
+    'show_train_eval':False,
+    'load':True,
     'max_loss': 100
 }
 
