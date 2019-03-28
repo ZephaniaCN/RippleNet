@@ -27,7 +27,7 @@ ripple_net_book_args = {
     'model': 'ripple_net',
     'dataset_path': Path('../../data'),
     'dataset': 'book',
-    'dim': 6,
+    'dim': 4,
     'n_hop': 2,
     'kge_weight': 1e-2,
     'l2_weight': 1e-5,
@@ -35,7 +35,7 @@ ripple_net_book_args = {
     'n_memory': 32,
     'log_path': Path('../../logs'),
     'model_path': Path('../../models'),
-    'file_name': 'ripple_net_book_1',
+    'file_name': 'ripple_net_book',
     'n_epoch': 10,
     'batch_size': 1024,
     'show_eval': True,
@@ -43,7 +43,7 @@ ripple_net_book_args = {
     'test': True,
     'save_model': True,
     'show_train_eval': True,
-    'load':True,
+    'load':False,
     'max_loss': 100
 
 }
@@ -53,7 +53,7 @@ ripple_net_plus_movie_args = {
     'dataset_path': Path('../../data'),
     'dataset':'movie',
     'dim':16,
-    'n_hop':6,
+    'n_hop':3,
     'kge_weight':0.01,
     'l2_weight':1e-7,
     'lr':0.02,
@@ -66,10 +66,10 @@ ripple_net_plus_movie_args = {
     'n_epoch':20,
     'batch_size':1024,
     'show_eval':True,
-    'show_loss':True,
+    'show_loss':False,
     'test':True,
     'save_model':True,
-    'show_train_eval':True,
+    'show_train_eval':False,
     'load':True,
     'max_loss': 100
 }

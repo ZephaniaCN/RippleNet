@@ -2,14 +2,14 @@
 from concurrent import futures
 from hyperopt import Trials
 from src.tensorflow.train import  run_exp
-from src.tensorflow.args import args_convert, ripple_net_plus_book_args
+from src.tensorflow.args import args_convert, ripple_net_plus_movie_args
 import time
 import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 bayes_trials = Trials()
 
-
+ripple_args = ripple_net_plus_movie_args
 
 bayes_trials = Trials()
 
@@ -44,11 +44,13 @@ def model_thread(args):
     return res
 int_list=['n_hop','n_memory','dim']
 
+
+
 def objective(hyperparameters):
     for key in int_list:
         hyperparameters[key] = int(hyperparameters[key])
 
-    args = {**ripple_net_plus_book_args, **hyperparameters}
+    args = {**ripple_args, **hyperparameters}
     args['file_name']='{}{:.1e}lr{:.1e}kg{:.1e}l2{:.2f}dp{}m{}h{}d{}b{}'.format(
         args['file_name'],args['lr'],args['kge_weight'],args['l2_weight'],args['dropout'],
         args['n_memory'],args['n_hop'],args['dim'],args['batch_size'],args['predict_mode'],

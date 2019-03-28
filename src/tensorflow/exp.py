@@ -7,4 +7,4 @@ logger.setLevel(logging.INFO)
 
 
 
-run_exp(args.args_convert(args.ripple_net_plus_movie_args))
+run_exp(args.args_convert(args.ripple_net_book_args))
