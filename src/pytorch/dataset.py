@@ -107,11 +107,11 @@ class Expdata(Dataset):
     def load_data(self,filename):
         loading_file = self.data_path/(filename+'.np')
         if loading_file.exists():
-            loaded_file = np.load(loading_file)
+            loaded_file = np.load(str(loading_file))
         else:
             rating_file_txt = self.data_path/(filename+'.txt')
-            loaded_file = np.loadtxt(rating_file_txt, dtype=np.int32)
-            np.save(loading_file, loaded_file)
+            loaded_file = np.loadtxt(str(rating_file_txt), dtype=np.int32)
+            np.save(str(loading_file), loaded_file)
         return loaded_file
     def load_kg(self):
         logger.info('reading KG file ...')

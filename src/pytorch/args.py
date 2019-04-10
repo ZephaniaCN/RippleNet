@@ -66,13 +66,8 @@ ripple_net_plus_movie_args = {
     'file_name':'ripple_net_plus_movie',
     'n_epoch':20,
     'batch_size':1024,
-    'show_eval':True,
-    'show_loss':False,
+    'eval':True,
     'test':True,
-    'save_model':True,
-    'show_train_eval':False,
-    'load':True,
-    'max_loss': 100
 }
 #run_ripple_net_plus_book_6.9e-05lr_4.2e-02kg_4.8e-08l2_0.50dp_44m_2h_44d_basic
 ripple_net_plus_book_args = {
@@ -86,56 +81,34 @@ ripple_net_plus_book_args = {
     'lr':0.001,
     'n_memory':32,
     'dropout':0.8,
-    'predict_mode':'dense',
-    'log_path':Path('../../logs'),
-    'model_path':Path('../../models'),
-    'file_name':'ripple_net_plus_book',
     'n_epoch':15,
     'batch_size':1024,
-    'show_eval':True,
-    'show_loss':True,
+    'use_hyperopt': False,
     'test':True,
-    'save_model':True,
-    'show_train_eval':False,
-    'load':True,
-    'max_loss': 100
+    'eval':True
 }
 
-
 def args_convert(args):
-    target_args = dict()
-    target_args['static_args']={
-        'model_args': {
-           'dim': args['dim'],
-           'n_hop': args['n_hop'],
-           'kge_weight': args['kge_weight'],
-           'l2_weight': args['l2_weight'],
-           'lr': args['lr'],
-           'n_memory': args['n_memory'],
-       },
-       'dataset_args': {
-           'root_path': args['dataset_path'],
-           'dataset': args['dataset'],
-           'dim': args['dim'],
-           'n_hop': args['n_hop'],
-           'n_memory': args['n_memory']
-       },
-        'model':args['model'],
-        'log_path': args['log_path'],
-        'model_path': args['model_path']/args['file_name'],
-        'file_name': args['file_name'],
+    target_args = {'model_args': {
+        'dim': args['dim'],
+        'n_hop': args['n_hop'],
+        'kge_weight': args['kge_weight'],
+        'l2_weight': args['l2_weight'],
+        'dropout': args['dropout']
+    }, 'dataset_args': {
+        'root_path': args['dataset_path'],
+        'dataset': args['dataset'],
+        'dim': args['dim'],
+        'n_hop': args['n_hop'],
+        'n_memory': args['n_memory']
+    },
+        'model': args['model'],
+        #'file_name': args['file_name'],
         'n_epoch': args['n_epoch'],
+        'lr': args['lr'],
         'batch_size': args['batch_size'],
-        'max_loss':args['max_loss']
-    }
-    target_args['runtime_args']={
-        'show_eval': args['show_eval'],
-        'show_loss': args['show_loss'],
-        'test': args['test'],
-        'save_model': args['save_model'],
-        'show_train_eval': args['show_train_eval']
-    }
-    if args['model']=='ripple_net_plus':
-        target_args['static_args']['model_args']['dropout']=args['dropout']
-        target_args['static_args']['model_args']['predict_mode']=args['predict_mode']
+        'eval':args['eval'],
+        'test':args['test'],
+        'use_hyperopt':args['use_hyperopt']
+        }
     return target_args

@@ -1,71 +1,109 @@
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from logging import getLogger
-import torch
-logger = getLogger()
-class Trainer():
-    def __init__(self,dset,model,optim,max_loss):
-        self.dataset = dset
-        self.model = model
-        self.optim = optim
-        self.max_loss = max_loss
+from src.pytorch.model.ripple_net_plus import RippleNetPlus
+from src.pytorch.dataset import Expdata
+from src.pytorch.reporter import NniReporter ,Reporter
+from src.pytorch.args import args_convert
+from sklearn.metrics import roc_auc_score
+import numpy as np
 
-    def train(self, batch_size):
-        logger.info('start training...')
-        self.dataset.set_mode('train')
-        train_loader = DataLoader(
-            self.dataset, batch_size=batch_size, shuffle=True
+import torch
+import nni
+logger = getLogger()
+
+
+class Trainer():
+    def __init__(self,dataset_args, model_args, model,lr , batch_size, n_epoch, use_hyperopt, eval=True, test=True):
+        model_dict = {
+            'ripple_net_plus': RippleNetPlus
+        }
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+        self.n_epoch = n_epoch
+        # if not Path(model_path).exists():
+        #     os.mkdir(model_path)
+        # self.model_path = model_path / '{}_model.ckpt'.format(str(file_name))
+        #self.model_path = str(self.model_path)
+        self.dataset = Expdata(**dataset_args)
+        n_entity, n_relation = self.dataset.get_n_enitity_relation()
+
+        self.model = model_dict[model](**model_args, n_entity=n_entity, n_relation=n_relation)
+        self.model.to(self.device)
+
+        self.optim = torch.optim.Adam(self.model.parameters(),lr=lr)
+        self.batch_size = batch_size
+        self.n_epoch = n_epoch
+        self.eval = eval
+        self.test = test
+        self.reporter = NniReporter() if use_hyperopt else Reporter('auc')
+
+    def __set_config_mode(self, mode):
+        model_switch = {
+            'train': self.model.train,
+            'test': self.model.eval,
+            'eval': self.model.eval
+        }
+        self.dataset.set_mode(mode)
+        data_loader = DataLoader(
+            self.dataset, batch_size=self.batch_size, shuffle=True
         )
-        self.model.train()
+        model_switch[mode]()
+        return data_loader
+
+
+    def __epoch_train(self):
+        device = self.device
+        train_loader = self.__set_config_mode('train')
         for batch_idx, data in enumerate(train_loader):
             logger.info('batch_idx: {}'.format(batch_idx))
             self.optim.zero_grad()
-            # noinspection PyRedeclaration
-            vs, labels, hs, Rs, ts = data
-            batch_size = vs.size()[0]
-            vs = Variable(vs.cuda())
-            labels = Variable(labels.to(torch.float32).cuda())
-            hs = Variable(hs.cuda())
-            Rs = Variable(Rs.cuda())
-            ts = Variable(ts.cuda())
+            v_i, labels, h_i, R_i, t_i = data
+            v_i, labels, h_i, R_i, t_i = v_i.to(device), labels.to(device),h_i.to(device), R_i.to(device), t_i.to(device)
 
-            loss = self.model.get_loss(vs, labels, hs, Rs, ts)
+            loss = self.model.get_loss(v_i, labels, h_i, R_i, t_i)
             loss.backward()
-            if loss > self.max_loss:
-                break
             self.optim.step()
             logger.info('batch_idx: {}\tloss:{}'.format(batch_idx,loss.item()))
-        logger.info('finish train...')
         return loss
+    def train(self):
+        logger.info('start training...')
+        for epoch in range(self.n_epoch):
+            self.__epoch_train()
+            if(self.eval):
+                eval_res = self.__epoch_eval('eval')
+            if(self.test):
+                test_res = self.__epoch_eval('test')
+            self.reporter.intermediate_report(eval_res['auc'], epoch)
+        logger.info('finish train...')
+        self.reporter.fin_report()
+        return eval_res, test_res
 
-    def eval(self, batch_size,model):
+    def __epoch_eval(self, mode):
         logger.info('start eval...')
-        self.dataset.set_mode(model)
-        self.model.eval()
-        eval_loader = DataLoader(
-            self.dataset, batch_size=batch_size, shuffle=False
-        )
+        device = self.device
+        eval_loader = self.__set_config_mode(mode)
         aucs = []
         accs = []
         for batch_idx, data in enumerate(eval_loader):
-            vs, labels, hs, Rs, ts = data
-            batch_size = vs.size()[0]
-            vs = Variable(vs.cuda())
-            labels = Variable(labels.to(torch.float32).cuda())
-            hs = Variable(hs.cuda())
-            Rs = Variable(Rs.cuda())
-            ts = Variable(ts.cuda())
-            auc, acc = self.model.eval(vs, labels, hs, Rs, ts)
+            v_i, labels, h_i, R_i, t_i = data
+            v_i, labels, h_i, R_i, t_i = v_i.to(device), labels.to(device),h_i.to(device), R_i.to(device), t_i.to(device)
+
+            output = self.model(h_i, R_i, t_i, v_i)
+            predict = torch.floor(output + 0.5)
+            acc = torch.mean(torch.eq(predict, labels.to(torch.float32)).to(torch.float32))
+            auc = roc_auc_score(y_true=labels.cpu().detach().numpy(), y_score=output.cpu().detach().numpy())
             aucs.append(auc)
             accs.append(acc)
-            logger.info('batch_idx: {}\tauc:{}\tacc:{}'.format(batch_idx, auc,acc.item()))
         acc = torch.mean(torch.stack(accs))
-        auc = torch.mean(torch.stack(aucs))
+        auc = np.mean(aucs)
         logger.info('finish eval...')
-        return auc,acc
+        logger.info('auc:{},acc:{}'.format(auc, acc))
+        return {'auc':auc,'acc':acc.item()}
 
-# class Experiement():
-#     def __init__(self, trainer):
-#
-#     def exec(self):
-#         self.trainer =
+
+def run_exp(default_args):
+    args = nni.get_next_parameter()
+    args = {**default_args, **args}
+    trainer=Trainer(**args_convert(args))
+    trainer.train()
