@@ -164,11 +164,12 @@ class AnswerModule(nn.Module):
         super(AnswerModule, self).__init__()
         self.hidden_size = dim
         self.dim = dim
-        self.w = nn.Sequential(nn.Linear(self.dim, self.dim), nn.Sigmoid(), nn.Dropout(0.1))
+        self.w = nn.Linear(self.dim, self.dim)
 
     def forward(self, M,  v):
         M = self.w(M)
         predict = torch.sum(v * M, dim=1)
+        predict = torch.sigmoid(predict)
         return predict
 
 class RippleNetPlus(nn.Module):

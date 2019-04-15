@@ -91,6 +91,7 @@ class Trainer():
 
             output = self.model(h_i, R_i, t_i, v_i)
             predict = torch.floor(output + 0.5)
+
             acc = torch.mean(torch.eq(predict, labels.to(torch.float32)).to(torch.float32))
             auc = roc_auc_score(y_true=labels.cpu().detach().numpy(), y_score=output.cpu().detach().numpy())
             aucs.append(auc)
