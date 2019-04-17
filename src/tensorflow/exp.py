@@ -5,6 +5,6 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+#np.random.seed(555)
 
-
-run_exp(args.args_convert(args.ripple_net_book_args))
+run_exp(args.args_convert(args.ripple_net_plus_book_args))

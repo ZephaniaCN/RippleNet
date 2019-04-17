@@ -30,6 +30,7 @@ class summary_writers:
 
     def simple_value(self, tag_name, value, epoch):
         summary = tf.Summary()
+        logger.info('{}:{}\t{}'.format(tag_name,value,epoch))
         summary.value.add(tag=tag_name, simple_value=value)
         try:
             self.writer_dict[self.mode].add_summary(summary, epoch)
