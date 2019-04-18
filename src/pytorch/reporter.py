@@ -58,9 +58,10 @@ class NniReporter():
         self.best_res=0
         self.nni_key = nni_key
     def intermediate_report(self, res):
-        nni.report_intermediate_result(res[self.nni_key]['eval'])
-        if(res>self.best_res):
-            self.best_res = res
+        key_value= res[self.nni_key]['eval']
+        nni.report_intermediate_result(key_value)
+        if(key_value>self.best_res):
+            self.best_res = key_value
     def fin_report(self):
         nni.report_final_result(self.best_res)
         best_res=self.best_res

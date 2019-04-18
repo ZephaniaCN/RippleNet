@@ -1,0 +1,11 @@
+
+{
+    "dim": {"_type":"choice","_value":[2,4,8,16,32,48]},
+    "n_hop":{"_type":"choice","_value":[2,3,4,5]},
+    "kge_weight":{"_type":"choice","_value":[1e-1,1e-2,1e-3,1e-4,1e-5,1e-6,1e-7,1e-8,1e-9]},
+    "l2_weight":{"_type":"choice","_value":[1e-1,1e-2,1e-3,1e-4,1e-5,1e-6,1e-7,1e-8,1e-9]},
+    "lr":{"_type":"choice","_value":[1e-1,1e-2,1e-3,1e-4,1e-5]},
+    "n_memory":{"_type":"choice","_value":[2,4,8,16,32,48]},
+    "dropout":{"_type":"uniform","_value":[0.1,0.5]},
+    "batch_size":{"_type":"choice","_value":[32, 64, 128, 256, 512,1024]}
+}

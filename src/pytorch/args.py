@@ -52,7 +52,7 @@ ripple_net_plus_hyper_book_args = {
     'dropout':0.2,
     'n_epoch':15,
     'batch_size':1024,
-    'reporter_mode':'print',
+    'reporter_mode':'tensorboard',
     'use_hyperopt': True, # 是否使用nni自动调参
     'hyper_key': 'auc',
     'test':False,
