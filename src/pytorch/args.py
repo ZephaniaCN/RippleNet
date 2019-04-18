@@ -28,17 +28,37 @@ ripple_net_plus_book_args = {
     'l2_weight':1e-5,
     'lr':0.001,
     'n_memory':32,
-    'dropout':0.8,
+    'dropout':0.2,
     'n_epoch':15,
     'batch_size':1024,
-    'reporter_mode':'tensorboard',
-    'use_hyperopt': True, # 是否使用nni自动调参
+    'reporter_mode':'print',
+    'use_hyperopt': False, # 是否使用nni自动调参
     'hyper_key': 'auc',
     'test':True,
     'eval':True,
     'eval_train':True
 }
 
+ripple_net_plus_hyper_book_args = {
+    'model':'ripple_net_plus',
+    'dataset_path': Path('../../data'),
+    'dataset':'book',
+    'dim':4,
+    'n_hop':2,
+    'kge_weight':0.01,
+    'l2_weight':1e-5,
+    'lr':0.001,
+    'n_memory':32,
+    'dropout':0.2,
+    'n_epoch':15,
+    'batch_size':1024,
+    'reporter_mode':'print',
+    'use_hyperopt': True, # 是否使用nni自动调参
+    'hyper_key': 'auc',
+    'test':False,
+    'eval':True,
+    'eval_train':False
+}
 def args_convert(args):
     target_args = {'model_args': {
         'dim': args['dim'],

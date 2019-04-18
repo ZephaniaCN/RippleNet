@@ -72,17 +72,20 @@ class Trainer():
         logger.info('start training...')
         for epoch in range(self.n_epoch):
             loss = self.__epoch_train()
+            res = {'loss': {'train':loss}}
             if(self.eval):
                 eval_res = self.__epoch_eval('eval')
+                for key in eval_res.keys():
+                    res[key] = {**res.setdefault(key,{}), 'eval': eval_res[key]}
             if(self.test):
                 test_res = self.__epoch_eval('test')
+                for key in test_res.keys():
+                    res[key] = {**res.setdefault(key,{}), 'test': test_res[key]}
             if(self.eval_train):
                 train_res = self.__epoch_eval('eval_train')
-            res={
-                'train':{**train_res,'loss':loss},
-                'eval':eval_res,
-                'test':test_res
-            }
+                for key in train_res.keys():
+                    res[key] = {**res.setdefault(key,{}), 'train': train_res[key]}
+
             self.reporter.intermediate_report(res, epoch)
         logger.info('finish train...')
         self.reporter.fin_report()
