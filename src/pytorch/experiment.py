@@ -93,6 +93,21 @@ class Trainer():
 
     def __epoch_eval(self, mode):
         logger.info('start eval...')
+        aucs=[]
+        accs=[]
+        for i in range(5):
+            auc,acc=self.__single_epoch_eval(mode)
+            aucs.append(auc)
+            accs.append(acc)
+        auc=np.mean(aucs)
+        acc=np.mean(accs)
+        logger.info('finish eval...')
+        logger.info('auc:{},acc:{}'.format(auc, acc))
+
+        return {'auc':auc,'acc':acc}
+
+
+    def __single_epoch_eval(self, mode):
         device = self.device
         eval_loader = self.__set_config_mode(mode)
         aucs = []
@@ -110,9 +125,8 @@ class Trainer():
             accs.append(acc)
         acc = torch.mean(torch.stack(accs))
         auc = np.mean(aucs)
-        logger.info('finish eval...')
-        logger.info('auc:{},acc:{}'.format(auc, acc))
-        return {'auc':auc,'acc':acc.item()}
+
+        return auc, acc.item()
 
 
 def run_exp(default_args):
